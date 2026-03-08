@@ -1,49 +1,32 @@
-version: '3.8'
-
 services:
-  # Servicio del Backend
+  # Servicio del Backend (Spring Boot 4.0.3)
   backend:
     build: ./backend
     container_name: barberia-backend
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/barberia_db?allowPublicKeyRetrieval=true&useSSL=false
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-    depends_on:
-      - db
+      - SPRING_DATASOURCE_URL=${DB_URL}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - JWT_SECRET=${JWT_SECRET}
     networks:
       - app-network
 
-  # Servicio del Frontend
+  # Servicio del Frontend (React + Nginx)
   frontend:
     build: ./frontend
     container_name: barberia-frontend
     ports:
-      - "5173:80" # Mapeamos el 5173 (típico de Vite) o el 80 de tu máquina al 80 del contenedor
+      - "5173:80"
     depends_on:
       - backend
     networks:
       - app-network
 
-  # Base de datos (Opcional, si tu App la requiere)
-  db:
-    image: mysql:8.0
-    container_name: barberia-db
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: barberia_db
-    ports:
-      - "3306:3306"
-    networks:
-      - app-network
-    volumes:
-      - db_data:/var/lib/mysql
-
 networks:
   app-network:
     driver: bridge
-
-volumes:
-  db_data:

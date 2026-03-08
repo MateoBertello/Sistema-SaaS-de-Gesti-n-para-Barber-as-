@@ -6,7 +6,8 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Etapa de ejecución (Run)
-FROM openjdk:17-jdk-slim
+# Cambiamos a Amazon Corretto para evitar cualquier relación con Eclipse
+FROM amazoncorretto:17-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
