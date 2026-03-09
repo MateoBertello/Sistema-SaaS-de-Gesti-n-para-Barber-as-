@@ -17,4 +17,10 @@ public class ServicioController {
 
     @PostMapping
     public Servicio crear(@RequestBody Servicio servicio) { return servicioService.guardar(servicio); }
+
+    // --- ESTO FALTABA ---
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Long id) {
+        servicioService.eliminar(id);
+    }
 }

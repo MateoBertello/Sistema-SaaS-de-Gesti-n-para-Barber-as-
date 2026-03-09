@@ -17,4 +17,10 @@ public class SucursalController {
 
     @PostMapping
     public Sucursal crear(@RequestBody Sucursal sucursal) { return sucursalService.guardar(sucursal); }
+
+    // --- ESTO FALTABA ---
+    @DeleteMapping("/{id}")
+    public void eliminar(@PathVariable Long id) {
+        sucursalService.eliminar(id);
+    }
 }
