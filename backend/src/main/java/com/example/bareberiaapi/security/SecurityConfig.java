@@ -34,7 +34,8 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:3000",
-                "http://localhost:5173"
+                "http://localhost:5173",
+                "http://localhost"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
@@ -74,11 +75,12 @@ public class SecurityConfig {
 
                         // DUENO Y BARBERO
                         .requestMatchers(HttpMethod.PUT, "/api/turnos/**").hasAnyRole("DUEÑO", "BARBERO", "CLIENTE")
+                        .requestMatchers(HttpMethod.POST, "/api/turnos/walkin").hasAnyRole("DUEÑO", "BARBERO")
 
                         // CUALQUIER AUTENTICADO
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/barberos").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/turnos").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/turnos").hasAnyRole("CLIENTE", "DUEÑO")
+                        .requestMatchers(HttpMethod.POST, "/api/turnos").hasAnyRole("CLIENTE", "DUEÑO", "BARBERO")
                         .requestMatchers(HttpMethod.GET, "/api/sucursales/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/servicios/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/horarios/**").authenticated()
