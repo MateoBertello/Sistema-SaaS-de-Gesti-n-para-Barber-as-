@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Scissors } from "lucide-react";
+import { Plus, Scissors, AlertTriangle } from "lucide-react"; // Importamos AlertTriangle
 import { apiClient } from "../utils/apsClient";
 
 // 1 módulo = 15 min, máximo 8 módulos (2 horas)
@@ -43,7 +43,11 @@ export function ServicesManagement() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: "", modulos: "2", price: "" });
 
-  const load = () => apiClient<any[]>("/servicios").then(setServices).catch(console.error);
+  // 1. CARGA INICIAL (Sin filtros, traemos todo)
+  const load = () => apiClient<any[]>("/servicios")
+    .then(data => setServices(data)) // Cargamos la lista completa
+    .catch(console.error);
+
   useEffect(() => { load(); }, []);
 
   const handleSave = async () => {
@@ -55,7 +59,7 @@ export function ServicesManagement() {
           nombre: form.name,
           duracionMinutos: modulosAMinutos(parseInt(form.modulos)),
           precio: parseFloat(form.price),
-          activo: true,
+          activo: true, // Creamos como activo
         }),
         successMessage: "Servicio guardado",
       });
@@ -65,11 +69,12 @@ export function ServicesManagement() {
     } catch (e) { console.error(e); }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("¿Borrar este servicio?")) return;
+  const handleDelete = async (s: any) => {
+    if (!confirm("¿Desactivar este servicio definitivamente?")) return;
     try {
-      await apiClient(`/servicios/${id}`, { method: "DELETE", successMessage: "Servicio eliminado" });
-      setServices(s => s.filter(x => x.id !== id));
+      // Backend hace soft delete
+      await apiClient(`/servicios/${s.id}`, { method: "DELETE", successMessage: "Servicio desactivado" });
+      load(); // Recargamos para ver el cambio de estilo
     } catch (e) { console.error(e); }
   };
 
@@ -87,26 +92,49 @@ export function ServicesManagement() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {services.map(s => (
-          <div
-            key={s.id}
-            className="p-5 rounded-xl"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-          >
-            <div className="flex justify-between mb-2">
-              <Scissors className="w-5 h-5" style={{ color: "var(--gold)" }} />
-              <span className="font-bold" style={{ color: "var(--text)" }}>${Number(s.precio).toFixed(2)}</span>
-            </div>
-            <h3 className="font-medium" style={{ color: "var(--text)" }}>{s.nombre}</h3>
-            <p className="text-xs mb-4" style={{ color: "var(--text2)" }}>{duracionLabel(s.duracionMinutos)}</p>
-            <button
-              onClick={() => handleDelete(s.id)}
-              className="w-full py-2 rounded border border-red-900/30 text-red-400 hover:bg-red-900/10 text-xs"
+        {services.map(s => {
+          const isInactive = s.activo === false; // Chequeamos estado
+
+          return (
+            <div
+              key={s.id}
+              className="p-5 rounded-xl transition-all relative overflow-hidden"
+              style={{ 
+                  background: "var(--surface)", 
+                  border: isInactive ? "1px solid #7f1d1d" : "1px solid var(--border)", // Borde rojo si inactivo
+                  opacity: isInactive ? 0.6 : 1, // Opacidad baja si inactivo
+              }}
             >
-              Eliminar
-            </button>
-          </div>
-        ))}
+              {/* CARTELITO DE INACTIVO */}
+              {isInactive && (
+                  <div className="absolute top-0 right-0 bg-red-900/80 text-red-200 text-[10px] px-2 py-0.5 rounded-bl font-bold flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3"/> FUERA DE SERVICIO
+                  </div>
+              )}
+
+              <div className="flex justify-between mb-2 mt-1">
+                <Scissors className="w-5 h-5" style={{ color: isInactive ? "var(--text2)" : "var(--gold)" }} />
+                <span className="font-bold" style={{ color: isInactive ? "var(--text2)" : "var(--text)" }}>${Number(s.precio).toFixed(2)}</span>
+              </div>
+              <h3 className="font-medium" style={{ color: isInactive ? "var(--text2)" : "var(--text)" }}>{s.nombre}</h3>
+              <p className="text-xs mb-4" style={{ color: "var(--text2)" }}>{duracionLabel(s.duracionMinutos)}</p>
+              
+              {/* ACCIONES CONDICIONALES */}
+              {!isInactive ? (
+                  <button
+                    onClick={() => handleDelete(s)}
+                    className="w-full py-2 rounded border border-red-900/30 text-red-400 hover:bg-red-900/10 text-xs transition-colors"
+                  >
+                    Eliminar (Desactivar)
+                  </button>
+              ) : (
+                   <div className="w-full py-2 text-center rounded bg-zinc-800 text-zinc-600 text-xs italic">
+                      No editable
+                   </div>
+              )}
+            </div>
+          );
+        })}
         {services.length === 0 && (
           <div className="col-span-3 text-center py-12" style={{ color: "var(--text2)" }}>
             No hay servicios registrados.
@@ -132,7 +160,6 @@ export function ServicesManagement() {
               placeholder="Ej. Corte clásico"
             />
 
-            {/* Duración en módulos de 15 min */}
             <div className="mb-3">
               <label className="block text-xs mb-1 uppercase tracking-wider" style={{ color: "var(--text2)" }}>
                 Duración (módulos de 15 min)

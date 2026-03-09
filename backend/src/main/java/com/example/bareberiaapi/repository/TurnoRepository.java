@@ -9,7 +9,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface TurnoRepository extends JpaRepository<Turno, Long> {
-    // Revisa si el barbero ya tiene un turno asignado a esa hora exacta
+    List<Turno> findByClienteId(Long clienteId);
+    List<Turno> findByBarberoId(Long barberoId);
+
     boolean existsByBarberoIdAndFechaHoraInicio(Long barberoId, LocalDateTime fechaHoraInicio);
 
     @Query("""

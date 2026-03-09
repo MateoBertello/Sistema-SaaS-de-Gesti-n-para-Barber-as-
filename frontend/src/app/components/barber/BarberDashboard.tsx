@@ -1,183 +1,120 @@
-import { useState, useEffect } from "react";
-import { Calendar, Clock, User, CheckCircle, XCircle, UserPlus } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Calendar, CheckCircle, Clock, User, XCircle, Plus, Scissors } from "lucide-react";
 import { apiClient } from "../utils/apsClient";
-import { WalkInModal } from "../WalkInModal";
-
-interface Turno {
-  id: number;
-  cliente: { nombre: string; apellido: string } | null;
-  nombreWalkin: string | null;
-  servicio: { nombre: string };
-  sucursal: { nombre: string };
-  fechaHoraInicio: string;
-  estado: string;
-}
-
-function nombreCliente(t: Turno): string {
-  if (t.nombreWalkin) return `${t.nombreWalkin} (walk-in)`;
-  if (t.cliente)      return `${t.cliente.nombre} ${t.cliente.apellido}`;
-  return "—";
-}
-
-function getBarberoIdDelToken(): number | undefined {
-  try {
-    const token = localStorage.getItem("token") ?? "";
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.id as number;
-  } catch {
-    return undefined;
-  }
-}
+import { WalkInModal } from "../WalkInModal"; // Importamos tu modal
 
 export function BarberDashboard() {
-  const [turnos,     setTurnos]     = useState<Turno[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [walkInOpen, setWalkInOpen] = useState(false);
+  const [agenda, setAgenda] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Estado para el modal de Walk-In
+  const [isWalkInOpen, setIsWalkInOpen] = useState(false);
 
-  const barberoId = getBarberoIdDelToken();
-
-  async function cargarTurnos() {
-    setLoading(true);
+  const cargarAgenda = async () => {
     try {
-      const data = await apiClient<Turno[]>("/turnos");
-      setTurnos(data);
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+      const data = await apiClient<any[]>(`/turnos?barberoId=${userId}`);
+      // Ordenar por hora (el backend podría hacerlo, pero aseguramos aquí)
+      const sorted = data.sort((a,b) => new Date(a.fechaHoraInicio).getTime() - new Date(b.fechaHoraInicio).getTime());
+      setAgenda(sorted);
+    } catch (error) {
+      console.error(error);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  useEffect(() => { cargarTurnos(); }, []);
+  useEffect(() => { cargarAgenda(); }, []);
 
-  async function completar(id: number) {
-    await apiClient(`/turnos/${id}/completar`, { method: "PUT" });
-    cargarTurnos();
-  }
+  // Función que llama el modal al confirmar
+  const handleWalkInConfirm = async (data: any) => {
+      try {
+          const userId = localStorage.getItem('userId');
+          // Construimos el objeto Turno para Walk-In
+          const body = {
+              fechaHoraInicio: new Date().toISOString(), // Asumimos que es YA
+              estado: "PENDIENTE",
+              barbero: { id: Number(userId) },
+              sucursal: { id: 1 }, // Idealmente vendría del perfil del barbero
+              servicio: { id: data.servicioId },
+              nombreWalkin: data.nombreCliente // Campo especial para gente sin usuario
+          };
 
-  async function cancelar(id: number) {
-    await apiClient(`/turnos/${id}/cancelar`, { method: "PUT" });
-    cargarTurnos();
-  }
+          await apiClient("/turnos", {
+              method: "POST",
+              body: JSON.stringify(body),
+              successMessage: "Turno Walk-In creado"
+          });
+          setIsWalkInOpen(false);
+          cargarAgenda(); // Recargar la lista
+      } catch (e) {
+          console.error(e);
+      }
+  };
 
-  const hoy = new Date().toISOString().split("T")[0];
-  const turnosHoy = turnos.filter(t => t.fechaHoraInicio.startsWith(hoy) && t.estado === "PENDIENTE");
+  const cambiarEstado = async (id: number, nuevoEstado: string) => {
+    // ... (Tu lógica de cambiar estado igual que antes)
+    if (!confirm(`¿Cambiar a ${nuevoEstado}?`)) return;
+    try {
+        await apiClient(`/turnos/${id}`, { method: "PUT", body: JSON.stringify({ estado: nuevoEstado }) });
+        cargarAgenda();
+    } catch(e) { console.error(e); }
+  };
 
   return (
-    <div style={{ padding: "1.5rem", color: "var(--text)" }}>
-
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: "1.6rem", fontWeight: 700 }}>Mi Agenda</h1>
-          <p style={{ margin: "0.25rem 0 0", color: "var(--text-muted)", fontSize: "0.9rem" }}>
-            {turnosHoy.length} turno{turnosHoy.length !== 1 ? "s" : ""} pendiente{turnosHoy.length !== 1 ? "s" : ""} hoy
-          </p>
-        </div>
-        <button
-          onClick={() => setWalkInOpen(true)}
-          style={{
-            display: "flex", alignItems: "center", gap: "0.5rem",
-            background: "var(--gold)", color: "#000",
-            border: "none", borderRadius: "0.6rem",
-            padding: "0.6rem 1.2rem", fontWeight: 700,
-            cursor: "pointer", fontSize: "0.9rem",
-          }}
-        >
-          <UserPlus size={17} /> Walk-in
-        </button>
+    <div className="max-w-5xl mx-auto p-4 lg:p-8">
+      <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-white">Mi Agenda</h1>
+          {/* BOTÓN NUEVO WALK-IN */}
+          <button 
+            onClick={() => setIsWalkInOpen(true)}
+            className="bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-2 px-4 rounded-xl flex items-center gap-2 transition-colors"
+          >
+            <Plus className="w-5 h-5"/> Nuevo Walk-In
+          </button>
       </div>
-
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "1rem", marginBottom: "2rem" }}>
-        {[
-          { label: "Hoy",         value: turnosHoy.length,                                     icon: <Calendar size={20} color="var(--gold)" /> },
-          { label: "Completados", value: turnos.filter(t => t.estado === "COMPLETADO").length,  icon: <CheckCircle size={20} color="#4ade80" /> },
-          { label: "Cancelados",  value: turnos.filter(t => t.estado === "CANCELADO").length,   icon: <XCircle size={20} color="#f87171" /> },
-        ].map(s => (
-          <div key={s.label} style={{
-            background: "var(--card-bg)", border: "1px solid var(--border)",
-            borderRadius: "0.75rem", padding: "1.1rem",
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{s.label}</span>
-              {s.icon}
+      
+      {/* ... (Aquí va tu lista de turnos igual que antes) ... */}
+      <div className="grid gap-4">
+        {/* ... map agenda ... */}
+        {agenda.map(t => (
+            <div key={t.id} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl flex justify-between items-center">
+                {/* Visualización rápida de si es Cliente Registrado o Walk-In */}
+                <div>
+                    <div className="text-yellow-500 font-bold text-xl">
+                        {new Date(t.fechaHoraInicio).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                    </div>
+                    <div className="text-white font-medium flex items-center gap-2">
+                        {t.cliente ? (
+                           <><User className="w-4 h-4"/> {t.cliente.nombre}</>
+                        ) : (
+                           <><Scissors className="w-4 h-4 text-purple-400"/> <span className="text-purple-400">{t.nombreWalkin || "Walk-In"}</span></>
+                        )}
+                    </div>
+                    <div className="text-zinc-500 text-sm">{t.servicio?.nombre}</div>
+                </div>
+                
+                {/* Botones de acción (Completar/Cancelar) */}
+                <div className="flex gap-2">
+                    {t.estado === 'PENDIENTE' && (
+                        <>
+                            <button onClick={() => cambiarEstado(t.id, "COMPLETADO")} className="p-2 bg-green-900/30 text-green-400 rounded"><CheckCircle/></button>
+                            <button onClick={() => cambiarEstado(t.id, "CANCELADO")} className="p-2 bg-red-900/30 text-red-400 rounded"><XCircle/></button>
+                        </>
+                    )}
+                    {t.estado !== 'PENDIENTE' && <span className="text-zinc-500 font-bold text-sm">{t.estado}</span>}
+                </div>
             </div>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, marginTop: "0.25rem" }}>{s.value}</div>
-          </div>
         ))}
       </div>
 
-      {/* Lista */}
-      <div style={{ background: "var(--card-bg)", border: "1px solid var(--border)", borderRadius: "0.75rem" }}>
-        <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border)", fontWeight: 600 }}>
-          Turnos de hoy
-        </div>
-
-        {loading ? (
-          <p style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>Cargando...</p>
-        ) : turnosHoy.length === 0 ? (
-          <p style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>No hay turnos pendientes para hoy</p>
-        ) : (
-          turnosHoy.map(t => (
-            <div key={t.id} style={{
-              padding: "1rem 1.25rem",
-              borderBottom: "1px solid var(--border)",
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-            }}>
-              <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                <div style={{
-                  width: 40, height: 40, borderRadius: "50%",
-                  background: "var(--gold)22",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <User size={18} color="var(--gold)" />
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600 }}>{nombreCliente(t)}</div>
-                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", display: "flex", gap: "0.75rem", marginTop: "0.1rem" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: "0.2rem" }}>
-                      <Clock size={11} /> {t.fechaHoraInicio.split("T")[1]?.slice(0, 5)}
-                    </span>
-                    <span>{t.servicio.nombre}</span>
-                    <span>{t.sucursal.nombre}</span>
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <ActionBtn onClick={() => completar(t.id)} bg="#4ade8022" color="#4ade80" icon={<CheckCircle size={15} />} label="Completar" />
-                <ActionBtn onClick={() => cancelar(t.id)}  bg="#f8717122" color="#f87171" icon={<XCircle size={15} />}    label="Cancelar" />
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      <WalkInModal
-        isOpen={walkInOpen}
-        onClose={() => setWalkInOpen(false)}
-        onSuccess={cargarTurnos}
-        barberoPreseleccionado={barberoId}
+      {/* RENDERIZAMOS EL MODAL */}
+      <WalkInModal 
+        isOpen={isWalkInOpen} 
+        onClose={() => setIsWalkInOpen(false)}
+        onConfirm={handleWalkInConfirm}
       />
     </div>
-  );
-}
-
-function ActionBtn({ onClick, bg, color, icon, label }: {
-  onClick: () => void; bg: string; color: string;
-  icon: React.ReactNode; label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex", alignItems: "center", gap: "0.3rem",
-        background: bg, color,
-        border: `1px solid ${color}44`,
-        borderRadius: "0.4rem",
-        padding: "0.35rem 0.7rem",
-        cursor: "pointer", fontSize: "0.8rem", fontWeight: 600,
-      }}
-    >
-      {icon} {label}
-    </button>
   );
 }

@@ -13,4 +13,11 @@ public class ServicioService {
 
     public List<Servicio> listarTodos() { return servicioRepository.findAll(); }
     public Servicio guardar(Servicio servicio) { return servicioRepository.save(servicio); }
+
+    public void eliminar(Long id) {
+        Servicio servicio = servicioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Servicio no encontrado"));
+        servicio.setActivo(false); // Simplemente lo desactivamos
+        servicioRepository.save(servicio); // Guardamos el cambio
+    }
 }

@@ -79,8 +79,12 @@ export function BookingWizard() {
           apiClient<any[]>("/sucursales"),
           apiClient<any[]>("/servicios"),
         ]);
-        setBranches(bData);
-        setServices(sData);
+        
+        // --- FILTRO DE ACTIVOS ---
+        // Solo mostramos al cliente lo que está activo en BD
+        setBranches(bData.filter((b: any) => b.activa === true));
+        setServices(sData.filter((s: any) => s.activo === true));
+        
       } catch (error) { console.error(error); }
     };
     loadData();
@@ -88,7 +92,10 @@ export function BookingWizard() {
 
   useEffect(() => {
     if (step === 3) {
-      apiClient<any[]>("/usuarios/barberos").then(setBarbers).catch(console.error);
+      // Nota: Idealmente el backend también debería filtrar barberos activos
+      apiClient<any[]>("/usuarios").then(users => 
+        setBarbers(users.filter((u: any) => u.rol === "BARBERO" && u.activo !== false))
+      ).catch(console.error);
     }
   }, [step]);
 
@@ -203,7 +210,7 @@ export function BookingWizard() {
           </>
         )}
 
-        {/* PASO 4 — Horario (slots dinámicos según duración del servicio) */}
+        {/* PASO 4 — Horario */}
         {step === 4 && (
           <div>
             <p className="mb-2 text-center" style={{ color: "var(--text2)" }}>
