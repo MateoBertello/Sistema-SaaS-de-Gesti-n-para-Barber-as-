@@ -21,10 +21,12 @@ public class TurnoController {
             @RequestParam(required = false) Long barberoId
     ) {
         if (clienteId != null) {
-            return turnoService.listarPorCliente(clienteId);
+            // Adaptado al nuevo nombre en el Service
+            return turnoService.turnosDelCliente(clienteId);
         }
         if (barberoId != null) {
-            return turnoService.listarPorBarbero(barberoId);
+            // Adaptado al nuevo nombre en el Service
+            return turnoService.turnosDelBarbero(barberoId);
         }
         return turnoService.listarTodos();
     }
@@ -32,14 +34,24 @@ public class TurnoController {
     // Guardar nuevo turno
     @PostMapping
     public Turno crear(@RequestBody Turno turno) {
-        // Aquí podrías agregar lógica para validar que no se solapen usando el repo
         return turnoService.guardar(turno);
     }
 
-    // Actualizar estado (Cancelar / Completar)
-    @PutMapping("/{id}")
-    public Turno actualizar(@PathVariable Long id, @RequestBody Turno turno) {
-        // Asumimos que envías el objeto completo o al menos el estado
-        return turnoService.actualizarEstado(id, turno.getEstado());
+    // Actualizar estado (Completar desde el panel del Barbero con PUT)
+    @PutMapping("/{id}/estado")
+    public void cambiarEstado(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        String estado = body.get("estado");
+        if ("COMPLETADO".equals(estado)) {
+            turnoService.completar(id);
+        } else if ("CANCELADO".equals(estado)) {
+            turnoService.cancelar(id);
+        }
+    }
+
+    // --- ESTO FALTABA ---
+    // Por si el frontend envía un DELETE para cancelar el turno (Soft Delete)
+    @DeleteMapping("/{id}")
+    public void cancelarTurno(@PathVariable Long id) {
+        turnoService.cancelar(id);
     }
 }

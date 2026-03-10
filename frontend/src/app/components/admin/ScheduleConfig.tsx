@@ -43,8 +43,8 @@ export function ScheduleConfig() {
         apiClient<any[]>("/sucursales"),
       ]);
       setHorarios(h);
-      setBarberos(b);
-      setSucursales(s);
+      setBarberos(b.filter((barbero: any) => barbero.activo === true));
+      setSucursales(s.filter((sucursal: any) => sucursal.activa === true));
     } catch (e) { console.error(e); }
   };
 
