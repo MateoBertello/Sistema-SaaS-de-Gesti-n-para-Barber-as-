@@ -23,7 +23,11 @@ Construido con una arquitectura moderna: API REST stateless con Spring Boot + JW
 
 | Login | Panel Cliente | Wizard de Reservas | Panel Admin |
 |:-----:|:-------------:|:------------------:|:-----------:|
-| ![Login](./docs/screen-login.png) | ![Cliente](./docs/screen-client.png) | ![Wizard](./docs/screen-booking.png) | ![Admin](./docs/screen-admin.png) |
+| <img width="1266" height="913" alt="Login" src="https://github.com/user-attachments/assets/f787df48-7564-4241-b294-ffacddc92d8e" />
+ | <img width="1263" height="749" alt="ClientDashboard" src="https://github.com/user-attachments/assets/9456ccda-4964-4792-8da6-33ca319affd1" />
+ | <img width="1265" height="733" alt="BookingWizard" src="https://github.com/user-attachments/assets/1ade4547-a967-49f7-9e61-af3996d65c70" />
+ | <img width="1249" height="941" alt="AdminDashboard" src="https://github.com/user-attachments/assets/f3b97925-c79c-4762-81f9-6f235d5789c0" />
+|
 
 ---
 
@@ -317,4 +321,4 @@ El proyecto está diseñado para deployarse en cualquier servidor con Docker:
 
 [![GitHub](https://img.shields.io/badge/GitHub-MateoBertello-181717?style=flat-square&logo=github)](https://github.com/MateoBertello)
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Mateo_Bertello-0A66C2?style=flat-square&logo=linkedin)](www.linkedin.com/in/mateo-ignacio-bertello-3386193a0l)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Mateo_Bertello-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/mateo-ignacio-bertello-3386193a0)
