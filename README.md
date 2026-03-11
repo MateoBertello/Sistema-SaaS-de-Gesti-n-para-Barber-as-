@@ -21,11 +21,18 @@ Construido con una arquitectura moderna: API REST stateless con Spring Boot + JW
 
 ## 🖥️ Demo visual
 
-| Login | Panel Cliente | Wizard de Reservas | Panel Admin |
-|:-----:|:-------------:|:------------------:|:-----------:|
-| ![Login](https://github.com/user-attachments/assets/f787df48-7564-4241-b294-ffacddc92d8e) | ![Cliente](https://github.com/user-attachments/assets/9456ccda-4964-4792-8da6-33ca319affd1) | ![Wizard](https://github.com/user-attachments/assets/1ade4547-a967-49f7-9e61-af3996d65c70) | ![Admin](https://github.com/user-attachments/assets/f3b97925-c79c-4762-81f9-6f235d5789c0) |
+**Login**
+![Login](https://github.com/user-attachments/assets/f787df48-7564-4241-b294-ffacddc92d8e)
 
----
+**Panel Cliente**
+![Cliente](https://github.com/user-attachments/assets/9456ccda-4964-4792-8da6-33ca319affd1)
+
+**Wizard de Reservas**
+![Wizard](https://github.com/user-attachments/assets/1ade4547-a967-49f7-9e61-af3996d65c70)
+
+**Panel Admin**
+![Admin](https://github.com/user-attachments/assets/f3b97925-c79c-4762-81f9-6f235d5789c0)
+
 
 ## ✨ Funcionalidades
 
